@@ -5,10 +5,14 @@ import base64
 def get_id_from_urn(urn):
     """
     Return the ID of a given Linkedin URN.
-
+    
     Example: urn:li:fs_miniProfile:<id>
+    
+    If the URN does not contain an ID, return None.
     """
     return urn.split(":")[3]
+
+
 
 
 def get_urn_from_raw_update(raw_string):

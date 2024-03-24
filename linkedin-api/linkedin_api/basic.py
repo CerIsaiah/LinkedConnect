@@ -108,7 +108,8 @@ def post_data():
 
 @app.route('/get_employees', methods=['GET'])
 def get_employees():
-    jobs_df = pd.read_csv('./filtered_jobs.csv')
+    jobs_df = pd.read_csv('../../filtered_jobs.csv')
+
 
     # Get the list of companies
     companies = jobs_df['company'].unique()
@@ -138,8 +139,9 @@ def get_employees():
     print(employees)
     return jsonify(employees)
 
-   
-jobs_df = pd.read_csv('./filtered_jobs.csv')
+
+jobs_df = pd.read_csv('./LinkedConnect/filtered_jobs.csv')
+
 
 # Get the list of companies
 companies = jobs_df['company'].unique()
@@ -150,24 +152,53 @@ school_id = helpers.get_id_from_urn(school["entityUrn"])
 
 # Perform the LinkedIn search for each company
 # Get the company IDs for all companies
-company_ids = []
+results = {}  # Initialize an empty dictionary to store search results for each company
+
 for company_name in companies:
-    print(company_name)
-    company = linkedin.get_company(company_name)
-    company_id = helpers.get_id_from_urn(company["entityUrn"])
-    company_ids.append(company_id)
+    # Replace spaces with dashes if the company name is two words
+    if isinstance(company_name, str):
+        formatted_company_name = '-'.join(company_name.split()) if len(company_name.split()) == 2 else company_name
+    
+        print(f"Searching for company: {formatted_company_name}")
+        
+        try:
+            # Attempt to get the company information from LinkedIn
+            company = linkedin.get_company(formatted_company_name)
+            
+            if company:  # If company data is found'
+                
+                company_id = helpers.get_id_from_urn(company.get("entityUrn"))
+                print("Found company IDDD!!!!!!!!!!!!!!!")
+                if company_id:  # If a company ID is successfully extracted
+                    # Perform the LinkedIn search with the company ID
+                    employees = linkedin.search_people(
+                        schools=[school_id],
+                        current_company=[company_id],
+                        limit=3,
+                    )
+                    
+                    # Store the search results in the results dictionary using the company ID
+                    results[company_id] = employees
+                    print(f"Found {len(employees)} employees for company ID {company_id}")
+                else:
+                    print(f"Could not extract ID for company: {formatted_company_name}")
+            else:
+                print(f"No data found for company: {formatted_company_name}")
+                
+        except Exception as e:
+            print(f"An error occurred while searching for {formatted_company_name}: {e}")
+    else:
+        print(f"Non-string value encountered in 'company' column: {company_name}")
+        continue
 
-    # Perform the LinkedIn search with multiple company IDs
-employees = linkedin.search_people(
-    keywords='',
-    schools=[school_id],
-    current_company=company_ids,
-    limit=5,
-    include_private_profiles=True
-)
+    # After all companies have been searched, you may want to save the results
+try:
+    with open('search_results.json', 'w') as file:
+        json.dump(results, file)
+    print("Search results saved to search_results.json")
+except Exception as e:
+    print(f"An error occurred while saving the search results: {e}")
 
-# Return the number of employees as the result
-print(employees)
 
 """
 if __name__ == '__main__':
