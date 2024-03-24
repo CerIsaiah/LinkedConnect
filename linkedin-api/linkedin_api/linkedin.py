@@ -237,15 +237,16 @@ class Linkedin(object):
                 f"/graphql?variables=(start:{default_params['start']},origin:{default_params['origin']},"
                 f"query:("
                 f"{keywords}"
-                f"flagshipSearchIntent:SEARCH_SRP,"
+                f"flagshipSearchIntent:ORGANIZATIONS_PEOPLE_ALUMNI,"
                 f"queryParameters:{default_params['filters']},"
                 f"includeFiltersInResponse:false))&queryId=voyagerSearchDashClusters"
                 f".b0928897b71bd00a5a7291755dcd64f0"
             )
             data = res.json()
-
-            data_clusters = data.get("data", []).get("searchDashClustersByAll", [])
-
+            
+            data_clusters = data.get("data", [])
+            #.get("searchDashClustersByAll", [])
+            print(data_clusters)
             if not data_clusters:
                 return []
 
@@ -302,23 +303,16 @@ class Linkedin(object):
         network_depths=None,
         current_company=None,
         past_companies=None,
-        nonprofit_interests=None,
-        profile_languages=None,
         regions=None,
         industries=None,
         schools=None,
-        contact_interests=None,
-        service_categories=None,
-        include_private_profiles=False,  # profiles without a public id, "Linkedin Member"
-        # Keywords filter
+        include_private_profiles=False,
         keyword_first_name=None,
         keyword_last_name=None,
-        # `keyword_title` and `title` are the same. We kept `title` for backward compatibility. Please only use one of them.
         keyword_title=None,
         keyword_company=None,
         keyword_school=None,
-        network_depth=None,  # DEPRECATED - use network_depths
-        title=None,  # DEPRECATED - use keyword_title
+        limit=2,
         **kwargs,
     ):
         """Perform a LinkedIn search for people.
@@ -371,8 +365,6 @@ class Linkedin(object):
         if network_depths:
             stringify = " | ".join(network_depths)
             filters.append(f"(key:network,value:List({stringify}))")
-        elif network_depth:
-            filters.append(f"(key:network,value:List({network_depth}))")
         if regions:
             stringify = " | ".join(regions)
             filters.append(f"(key:geoUrn,value:List({stringify}))")
@@ -385,20 +377,9 @@ class Linkedin(object):
         if past_companies:
             stringify = " | ".join(past_companies)
             filters.append(f"(key:pastCompany,value:List({stringify}))")
-        if profile_languages:
-            stringify = " | ".join(profile_languages)
-            filters.append(f"(key:profileLanguage,value:List({stringify}))")
-        if nonprofit_interests:
-            stringify = " | ".join(nonprofit_interests)
-            filters.append(f"(key:nonprofitInterest,value:List({stringify}))")
         if schools:
             stringify = " | ".join(schools)
             filters.append(f"(key:schools,value:List({stringify}))")
-        if service_categories:
-            stringify = " | ".join(service_categories)
-            filters.append(f"(key:serviceCategory,value:List({stringify}))")
-        # `Keywords` filter
-        keyword_title = keyword_title if keyword_title else title
         if keyword_first_name:
             filters.append(f"(key:firstName,value:List({keyword_first_name}))")
         if keyword_last_name:
@@ -419,6 +400,8 @@ class Linkedin(object):
 
         results = []
         for item in data:
+            if (limit != -1 or len(results) >= limit):
+                break
             if (
                 not include_private_profiles
                 and (item.get("entityCustomTrackingInfo") or {}).get(
@@ -980,13 +963,15 @@ class Linkedin(object):
 
         data = res.json()
 
-        if data and "status" in data and data["status"] != 200:
-            self.logger.info("request failed: {}".format(data["message"]))
+        if not data.get("elements"):
+            self.logger.info(f"Company not found: {public_id}")
             return {}
 
         company = data["elements"][0]
 
         return company
+
+
 
     def get_conversation_details(self, profile_urn_id):
         """Fetch conversation (message thread) details for a given LinkedIn profile.
@@ -1057,7 +1042,9 @@ class Linkedin(object):
         if not (conversation_urn_id or recipients):
             self.logger.debug("Must provide [conversation_urn_id] or [recipients].")
             return True
-
+        response = self._post(...)
+        
+        
         message_event = {
             "eventCreate": {
                 "originToken": str(uuid.uuid4()),
