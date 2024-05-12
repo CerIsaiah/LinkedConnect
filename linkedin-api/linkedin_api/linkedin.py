@@ -393,7 +393,7 @@ class Linkedin(object):
             filters.append(f"(key:nonprofitInterest,value:List({stringify}))")
         if schools:
             stringify = " | ".join(schools)
-            filters.append(f"(key:schools,value:List({stringify}))")
+            filters.append(f"(key:schoolFilter,value:List({stringify}))")
         if service_categories:
             stringify = " | ".join(service_categories)
             filters.append(f"(key:serviceCategory,value:List({stringify}))")
@@ -416,7 +416,7 @@ class Linkedin(object):
             params["keywords"] = keywords
 
         #I set a limit of 3
-        data = self.search(params, **kwargs)
+        data = self.search(params, limit=3, **kwargs)
 
         results = []
         for item in data:
