@@ -1,6 +1,6 @@
 # LinkedConnect
 
-A Python tool built by a 3-person team that automates job market research and alumni career discovery through web scraping, API reverse-engineering, and LinkedIn data mapping.
+A Python tool that automates job market research and alumni career discovery through web scraping, API reverse-engineering, and LinkedIn data mapping.
 
 ---
 
