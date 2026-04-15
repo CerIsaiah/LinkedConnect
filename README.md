@@ -1,4 +1,4 @@
-# LinkedConnect
+# Alumni Nexus
 
 A Python tool that automates job market research and alumni career discovery through web scraping, API reverse-engineering, and LinkedIn data mapping.
 
